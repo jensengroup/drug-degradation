@@ -16,5 +16,5 @@ a = 0.43496246
 b = -114.66798804
 
 [executables]
-xtb = "/home/jseumer/qbin/xtb-dist/bin/xtb"
-crest = "/home/jseumer/qbin/crest/crest"
+xtb = "xtb"
+crest = "crest"
