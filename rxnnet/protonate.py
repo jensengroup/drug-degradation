@@ -22,6 +22,8 @@ from rxnnet.node import Node
 def get_element_graph(mol):
     """Get element graph hash for molecule comparison."""
     copy_mol = copy.deepcopy(mol)
+    for a in copy_mol.GetAtoms():
+        a.SetAtomMapNum(0)
     Chem.RemoveStereochemistry(copy_mol)
     m = Chem.RemoveAllHs(copy_mol)
     return rdMolHash.MolHash(m, rdMolHash.HashFunction.ElementGraph)
@@ -112,13 +114,14 @@ class Protonator:
             print(e)
             return []
         finally:
-            work_dir.cleanup()
+            # work_dir.cleanup()
+            pass
 
         out_mols = [ac2mol(a, c) for a, c in zip(all_atoms, all_coords)]
         for om, energy in zip(out_mols, energies):
             rdDetermineBonds.DetermineBonds(om, charge=charge)
             om.SetDoubleProp("electronic_energy", energy)
-
+        print(get_element_graph(mol))
         if self.swel:
             mols = out_mols
         else:

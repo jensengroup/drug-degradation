@@ -342,6 +342,8 @@ class ReactionNetwork:
             return ""
 
         draw_mol = Chem.RemoveHs(mol)
+        for a in draw_mol.GetAtoms():
+            a.SetAtomMapNum(0)
         draw_mol.RemoveAllConformers()
         return Draw.MolsToGridImage(
             [draw_mol], molsPerRow=1, subImgSize=(300, 250), useSVG=True

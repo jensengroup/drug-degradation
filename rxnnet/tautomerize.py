@@ -26,6 +26,8 @@ from rxnnet.config import Config
 
 def get_element_graph(mol):
     copy_mol = copy.deepcopy(mol)
+    for a in copy_mol.GetAtoms():
+        a.SetAtomMapNum(0)
     Chem.RemoveStereochemistry(copy_mol)
     m = Chem.RemoveAllHs(copy_mol)
     return rdMolHash.MolHash(m, rdMolHash.HashFunction.ElementGraph)
