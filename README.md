@@ -109,16 +109,15 @@ python -m rxnnet.visualize
 network_directory/
 ├── config.toml           # Configuration file
 ├── network-info.json     # Network metadata
-├── nodes.csv            # Node database
-├── nodes/               # Node data (SDF files)
-├── products/            # Generated products
-├── new-nodes/           # Pending nodes
-├── reactions/           # Reaction data
-└── qm-data/            # QM calculation results
+├── nodes.csv             # Node database
+├── nodes/                # Node data (SDF files)
+├── products/             # Generated products
+├── new-nodes/            # Pending nodes
+├── reactions/            # Reaction data
+└── qm-data/              # QM calculation results
 ```
 
-## Example
-
+## Simplified example 
 ```bash
 # Setup
 mkdir pinacol
@@ -133,20 +132,25 @@ python -m rxnnet.collect
 python -m rxnnet.protonate nodes/1-*.json -m protonate
 python -m rxnnet.collect
 
-# run 1 MTD simulation on protonated pinacol 
+# run 1 MTD simulation on protonated pinacol
 python -m rxnnet.run_md nodes/2-*.json
 python -m rxnnet.process_md
 python -m rxnnet.collect
 
+# run 1 MTD simulation on MTD product
+python -m rxnnet.run_md nodes/3-*.json
+python -m rxnnet.process_md
+python -m rxnnet.collect
+
 # Deprotonate the product of the MTD simulation
-python -m rxnnet.protonate nodes/3-*.json -m deprotonate
+python -m rxnnet.protonate nodes/5-*.json -m deprotonate
 python -m rxnnet.collect
 
 # Calculate energies for all nodes
 python -m rxnnet.calc nodes/*.json
 
 # Visualize
-python -m rxnnet.visualize 
+python -m rxnnet.visualize
 
 open network.html
 ```
