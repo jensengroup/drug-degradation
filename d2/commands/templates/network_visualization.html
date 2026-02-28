@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Reaction Network Visualization</title>
+    <link rel="stylesheet" href="static/css/network-visualization.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&family=Roboto:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Global Font Styles */
+        body,
+        button,
+        input,
+        select,
+        textarea {
+            font-family: 'Roboto', sans-serif;
+        }
+
+        /* Indices Modal Styles */
+        .indices-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            min-height: 400px;
+            /* Ensure modal has reasonable size when only one section visible */
+        }
+
+        .index-item {
+            display: inline-block;
+            width: 100%;
+            padding: 3px 6px;
+            margin: 2px 0;
+            break-inside: avoid;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .index-item:nth-child(odd) {
+            background-color: #f7f7f7;
+        }
+
+        .indices-section {
+            flex: 1;
+            min-height: 300px;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            transition: order 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        .indices-list {
+            font-family: 'Roboto', monospace;
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.6;
+            background-color: white;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: calc(70vh - 70px);
+            overflow-y: auto;
+            column-count: 3;
+            column-gap: 15px;
+            letter-spacing: 0.02em;
+        }
+
+        @media (max-width: 768px) {
+            .indices-list {
+                column-count: 1;
+            }
+        }
+
+        .no-indices {
+            color: #666;
+            font-style: italic;
+            font-weight: 500;
+            display: block;
+            text-align: center;
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .indices-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .indices-header h4 {
+            font-size: 15px;
+            margin: 0;
+            color: #333;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
+        .copy-button {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            font-size: 11px;
+        }
+
+        .copy-button:hover {
+            background-color: #f5f5f5;
+        }
+
+        .copy-button svg {
+            margin-right: 4px;
+        }
+
+        .copy-success {
+            background-color: #e8f5e9;
+            border-color: #c8e6c9;
+        }
+
+        .indices-header h4 {
+            margin: 0;
+        }
+
+        .copy-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #4A90E2;
+            padding: 5px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .copy-button:hover {
+            background-color: rgba(74, 144, 226, 0.1);
+        }
+
+        .copy-success {
+            background-color: rgba(40, 167, 69, 0.1) !important;
+            color: #28a745 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mynetwork"></div>
+
+    <div id="moleculeViewer" class="molecule-viewer">
+        <div class="controls-panel">
+            <div class="controls-header">
+                <h3>Controls</h3>
+                <button id="helpButton" class="help-button" title="Help & Instructions">?</button>
+            </div>
+
+            <!-- Slider Controls -->
+            <div class="slider-control">
+                <label for="threshold">
+                    Edge Count Threshold: <span id="thresholdValue" class="slider-value">5</span>
+                </label>
+                <input type="range" id="threshold" min="1" max="10" value="5">
+            </div>
+
+            <div class="slider-control">
+                <label for="barrierThreshold">
+                    Max Barrier Threshold: <span id="barrierThresholdValue" class="slider-value">50</span>
+                    kcal/mol
+                </label>
+                <input type="range" id="barrierThreshold" min="0" max="100" value="50" step="1">
+                <div class="slider-hint">
+                    Filters by maximum barrier (barrier - min energy along path from substrate)
+                </div>
+            </div>
+
+            <!-- Disable All Filters Option -->
+            <div class="checkbox-control">
+                <input type="checkbox" id="disableAllFilters">
+                <label for="disableAllFilters">Disable all filters</label>
+            </div>
+
+            <!-- Node Search -->
+            <div class="search-control">
+                <label for="nodeSearch">Find Node by Index</label>
+                <div class="search-input-group">
+                    <input type="number" id="nodeSearch" placeholder="Enter node ID...">
+                    <button id="searchButton" class="search-button">Go</button>
+                </div>
+                <div id="searchResult" class="search-result"></div>
+            </div>
+
+            <!-- Graph Statistics -->
+            <div id="graphStats" class="graph-stats">
+                <h4>Graph Statistics</h4>
+                <div class="stats-content">
+                    <div id="nodeCountContainer" class="stats-item clickable" title="Click to view node indices">Nodes:
+                        <span id="nodeCount">0</span>
+                    </div>
+                    <div id="edgeCountContainer" class="stats-item clickable" title="Click to view edge indices">Edges:
+                        <span id="edgeCount">0</span>
+                    </div>
+                    <div id="edgeBreakdown" class="stats-breakdown"></div>
+                </div>
+            </div>
+
+            <!-- Grid View Button -->
+            <button id="gridViewButton" class="action-button">
+                Show Degradation Products
+            </button>
+
+        </div>
+
+        <!-- Reaction Profile Diagram -->
+        <div id="reactionProfileContainer" class="reaction-profile-container">
+            <div id="reactionProfileHeader" class="reaction-profile-header" onclick="toggleReactionProfile()">
+                <h4>Reaction Profile</h4>
+                <span id="reactionProfileToggle" class="reaction-profile-toggle">▼</span>
+            </div>
+            <div id="reactionProfileChart" class="reaction-profile-chart" onclick="showChartModal()">
+                <canvas id="reactionProfileCanvas" class="reaction-profile-canvas"></canvas>
+            </div>
+        </div>
+
+        <div id="moleculeContainer" class="molecule-container">
+        </div>
+    </div>
+
+    <!-- Molecule Modal -->
+    <div id="moleculeModal" class="modal">
+        <div class="modal-content molecule">
+            <div id="modalMoleculeContent">
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Modal -->
+    <div id="chartModal" class="modal">
+        <div class="modal-content chart">
+            <h3 id="modalChartTitle">Reaction Profile</h3>
+            <div style="height: calc(100% - 60px); position: relative;">
+                <canvas id="modalReactionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Small Molecule Modal for Chart Labels -->
+    <div id="smallMoleculeModal">
+        <div id="smallMoleculeContent" class="small-molecule-content">
+        </div>
+    </div>
+
+    <!-- Grid View Modal -->
+    <div id="gridViewModal" class="modal">
+        <div class="modal-content" style="padding: 20px; width: 90vw; height: 85vh; max-width: none; max-height: none;">
+            <div class="grid-modal-header">
+                <h2 class="grid-modal-title">Degradation Products</h2>
+                <div class="grid-controls">
+                    <div class="grid-control-group">
+                        <label for="gridMinCount" class="grid-control-label">Min Count:</label>
+                        <input type="number" id="gridMinCount" value="1" min="1" step="1" class="grid-control-input">
+                    </div>
+                    <div class="grid-control-group">
+                        <label for="gridMaxBarrier" class="grid-control-label">Max Barrier:</label>
+                        <input type="number" id="gridMaxBarrier" value="30" step="1" class="grid-control-input">
+                        <span class="grid-control-unit">kcal/mol</span>
+                    </div>
+                    <div class="grid-control-group">
+                        <label for="gridEnergyThreshold" class="grid-control-label">Max Energy:</label>
+                        <input type="number" id="gridEnergyThreshold" value="0" step="1" class="grid-control-input">
+                        <span class="grid-control-unit">kcal/mol</span>
+                    </div>
+                    <div class="grid-control-group">
+                        <input type="checkbox" id="neutralOnlyCheckbox" checked>
+                        <label for="neutralOnlyCheckbox" class="grid-control-label">Neutral only</label>
+                    </div>
+                    <div class="grid-control-group">
+                        <label class="grid-control-label">MW:</label>
+                        <input type="number" id="minMolWeight" placeholder="Min" step="1"
+                            class="grid-control-input small">
+                        <span class="grid-control-separator">-</span>
+                        <input type="number" id="maxMolWeight" placeholder="Max" step="1"
+                            class="grid-control-input small">
+                        <span class="grid-control-unit">Da</span>
+                    </div>
+                    <button id="updateGridButton" class="grid-action-button">Update</button>
+                    <button onclick="hideGridModal()" class="grid-close-button">Close</button>
+                </div>
+            </div>
+            <div id="gridContainer" class="grid-container">
+            </div>
+        </div>
+    </div>
+
+    <!-- Node List Modal -->
+    <div id="nodeListModal" class="modal" style="display: none;">
+        <div class="modal-content network-data-modal">
+            <div class="modal-header">
+                <h3>Current Network Nodes</h3>
+                <button onclick="hideNodeListModal()" class="modal-close-button">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-bar">
+                    <input type="text" id="nodeListSearch" placeholder="Search nodes by ID or energy...">
+                </div>
+                <div class="data-stats">
+                    <span id="nodeListCount">0 nodes</span>
+                    <button id="exportNodesButton" class="export-button">Export CSV</button>
+                </div>
+                <div id="nodeListContent" class="data-list">
+                    <!-- Node list will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edge List Modal -->
+    <div id="edgeListModal" class="modal" style="display: none;">
+        <div class="modal-content network-data-modal">
+            <div class="modal-header">
+                <h3>Current Network Edges</h3>
+                <button onclick="hideEdgeListModal()" class="modal-close-button">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-bar">
+                    <input type="text" id="edgeListSearch" placeholder="Search edges by nodes or type...">
+                </div>
+                <div class="data-stats">
+                    <span id="edgeListCount">0 edges</span>
+                    <button id="exportEdgesButton" class="export-button">Export CSV</button>
+                </div>
+                <div id="edgeListContent" class="data-list">
+                    <!-- Edge list will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Network Data Modal -->
+    <div id="networkDataModal" class="modal" style="display: none;">
+        <div class="modal-content network-data-modal">
+            <div class="modal-header">
+                <h3>Current Network Data</h3>
+                <button onclick="hideNetworkDataModal()" class="modal-close-button">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="network-data-section">
+                    <h4>Node Indices</h4>
+                    <div id="nodeIndicesContent" class="data-display">
+                        <!-- Node indices will be populated here -->
+                    </div>
+                </div>
+                <div class="network-data-section">
+                    <h4>Edge Tuples</h4>
+                    <div id="edgeTuplesContent" class="data-display">
+                        <!-- Edge tuples will be populated here -->
+                    </div>
+                </div>
+                <div class="data-stats">
+                    <button id="copyNetworkDataButton" class="export-button">Copy to Clipboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal" style="display: none;">
+        <div class="modal-content help-modal">
+            <div class="modal-header">
+                <h3>Network Visualization Help</h3>
+                <button onclick="hideHelpModal()" class="modal-close-button">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Help content will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Indices Modal -->
+    <div id="indicesModal" class="modal" style="display: none;">
+        <div class="modal-content network-data-modal">
+            <div class="modal-header">
+                <h3 id="indicesModalTitle">Network Indices</h3>
+                <button onclick="hideIndicesModal()" class="modal-close-button">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="indices-container">
+                    <div class="indices-section">
+                        <div class="indices-header">
+                            <h4>Visible Node Indices</h4>
+                            <button id="copyNodeIndices" class="copy-button" title="Copy node indices">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                                    viewBox="0 0 16 16">
+                                    <path
+                                        d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                                    <path
+                                        d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+                                </svg>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <div id="nodeIndicesList" class="indices-list"></div>
+                    </div>
+                    <div class="indices-section">
+                        <div class="indices-header">
+                            <h4>Visible Edge Indices</h4>
+                            <button id="copyEdgeIndices" class="copy-button" title="Copy edge indices">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                                    viewBox="0 0 16 16">
+                                    <path
+                                        d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                                    <path
+                                        d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+                                </svg>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <div id="edgeIndicesList" class="indices-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize with data from Python
+        window.VISUALIZATION_DATA = {{ VISUALIZATION_DATA }};
+    </script>
+
+    <!-- Load JavaScript modules -->
+    <script src="static/js/network-config.js?v=1.2"></script>
+    <script src="static/js/network-data.js?v=1.2"></script>
+    <script src="static/js/network-path-analysis.js?v=1.2"></script>
+    <script src="static/js/network-filters.js?v=1.2"></script>
+    <script src="static/js/network-stereoisomers.js?v=1.2"></script>
+    <script src="static/js/network-ui.js?v=1.2"></script>
+    <script src="static/js/network-utils.js?v=1.2"></script>
+    <script src="static/js/network-data-viewer.js?v=1.2"></script>
+    <script src="static/js/network-pathway-viewer.js?v=1.2"></script>
+    <script src="static/js/network-main.js?v=1.2"></script>
+
+    <script>
+        // Initialize the application when the page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.VISUALIZATION_DATA && window.initializeNetworkApp) {
+                window.initializeNetworkApp(window.VISUALIZATION_DATA);
+            }
+        });
+    </script>
+</body>
+
+</html>
