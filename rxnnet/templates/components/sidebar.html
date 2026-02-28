@@ -1,0 +1,87 @@
+<div id="sidebar">
+    <div class="controls-panel">
+        <div class="controls-header">
+            <h3>Controls</h3>
+            <button id="helpButton" class="help-button" title="Help & Instructions">?</button>
+        </div>
+
+        <!-- Edge Count Threshold -->
+        <div class="slider-control">
+            <label>
+                Edge Count Threshold: <span id="countThresholdValue" class="slider-value">1</span>
+            </label>
+            <input type="range" id="countThreshold" min="1" max="10" value="1">
+        </div>
+
+        <!-- Max Reaction Energy Threshold -->
+        <div class="slider-control">
+            <label>
+                Max Reaction Energy: <span id="energyThresholdValue" class="slider-value">30</span> kcal/mol
+            </label>
+            <input type="range" id="energyThreshold" min="0" max="100" value="30" step="1">
+            <div class="slider-hint">Filters by maximum reaction energy along pathway</div>
+        </div>
+
+        <!-- Max Barrier Threshold -->
+        <div class="slider-control">
+            <label>
+                Max Barrier: <span id="barrierThresholdValue" class="slider-value">50</span> kcal/mol
+            </label>
+            <input type="range" id="barrierThreshold" min="0" max="100" value="50" step="1">
+            <div class="slider-hint">Filters by maximum barrier from substrate</div>
+        </div>
+
+        <!-- Disable Filters -->
+        <div class="checkbox-control">
+            <input type="checkbox" id="disableFilters">
+            <label for="disableFilters">Disable all filters</label>
+        </div>
+
+        <!-- Node Search -->
+        <div class="search-control">
+            <label>Find Node by Index</label>
+            <div class="search-input-group">
+                <input type="number" id="nodeSearch" placeholder="Enter node ID...">
+                <button id="searchButton" class="search-button">Go</button>
+            </div>
+            <div id="searchResult" class="search-result"></div>
+        </div>
+
+        <!-- Graph Statistics -->
+        <div class="graph-stats">
+            <h4>Graph Statistics</h4>
+            <div class="stats-content">
+                <div id="nodeCountContainer" class="stats-item clickable">
+                    Nodes: <span id="nodeCount">0</span>
+                </div>
+                <div id="edgeCountContainer" class="stats-item clickable">
+                    Edges: <span id="edgeCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid View Button -->
+        <button id="gridViewButton" class="action-button">
+            Show Degradation Products
+        </button>
+    </div>
+
+    <!-- Reaction Profile -->
+    <div id="reactionProfileContainer" class="reaction-profile-container">
+        <div class="reaction-profile-header" onclick="UI.toggleReactionProfile()">
+            <h4>Reaction Profile</h4>
+            <span id="reactionProfileToggle" class="reaction-profile-toggle">▼</span>
+        </div>
+        <div id="reactionProfileChart" class="reaction-profile-chart">
+            <canvas id="reactionProfileCanvas" class="reaction-profile-canvas"></canvas>
+        </div>
+    </div>
+
+    <!-- Selected Molecules Display -->
+    <div id="moleculeContainer" class="molecule-container">
+        <div class="no-molecules-message">
+            <p>Click a node to select</p>
+            <p class="no-molecules-hint">Ctrl+click to multi-select<br>Double-click for pathway</p>
+        </div>
+    </div>
+</div>

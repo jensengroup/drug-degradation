@@ -1,0 +1,81 @@
+<!-- Molecule Modal -->
+<div id="moleculeModal" class="modal">
+    <div class="modal-content molecule">
+        <div id="modalMoleculeContent"></div>
+    </div>
+</div>
+
+<!-- Chart Modal -->
+<div id="chartModal" class="modal">
+    <div class="modal-content chart">
+        <h3 id="modalChartTitle">Reaction Profile</h3>
+        <div style="height: calc(100% - 60px); position: relative;">
+            <canvas id="modalReactionChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Grid View Modal -->
+<div id="gridViewModal" class="modal">
+    <div class="modal-content" style="padding: 20px; width: 90vw; height: 85vh; max-width: none;">
+        <div class="grid-modal-header">
+            <h2 class="grid-modal-title">Degradation Products</h2>
+            <div class="grid-controls">
+                <div class="grid-control-group">
+                    <label class="grid-control-label">Max Energy:</label>
+                    <input type="number" id="gridEnergyThreshold" value="0" step="1" class="grid-control-input">
+                    <span class="grid-control-unit">kcal/mol</span>
+                </div>
+                <div class="grid-control-group">
+                    <input type="checkbox" id="neutralOnlyCheckbox" checked>
+                    <label class="grid-control-label">Neutral only</label>
+                </div>
+                <div class="grid-control-group">
+                    <label class="grid-control-label">MW:</label>
+                    <input type="number" id="minMolWeight" placeholder="Min" class="grid-control-input small">
+                    <span>-</span>
+                    <input type="number" id="maxMolWeight" placeholder="Max" class="grid-control-input small">
+                    <span class="grid-control-unit">Da</span>
+                </div>
+                <button id="updateGridButton" class="grid-action-button">Update</button>
+                <button onclick="UI.hideGridModal()" class="grid-close-button">Close</button>
+            </div>
+        </div>
+        <div id="gridContainer" class="grid-container"></div>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div id="helpModal" class="modal">
+    <div class="modal-content" style="max-width: 600px; padding: 0;">
+        <div class="modal-header">
+            <h3>Network Visualization Help</h3>
+            <button onclick="UI.hideHelpModal()" class="modal-close-button">×</button>
+        </div>
+        <div class="modal-body">
+            <h4>Navigation</h4>
+            <ul>
+                <li><strong>Click</strong> a node to select it</li>
+                <li><strong>Ctrl+Click</strong> to multi-select nodes</li>
+                <li><strong>Double-click</strong> to select pathway from substrate</li>
+                <li><strong>Scroll</strong> to zoom in/out</li>
+                <li><strong>Drag</strong> to pan the view</li>
+            </ul>
+
+            <h4>Filters</h4>
+            <ul>
+                <li><strong>Edge Count</strong>: Filter edges by reaction count</li>
+                <li><strong>Max Energy</strong>: Filter by maximum reaction energy along pathway</li>
+                <li><strong>Max Barrier</strong>: Filter by barrier height from substrate</li>
+            </ul>
+
+            <h4>Edge Colors</h4>
+            <ul>
+                <li><span style="color: #55A69A;">■</span> Tautomerization</li>
+                <li><span style="color: #E2A334;">■</span> Protonation</li>
+                <li><span style="color: #3C56E9;">■</span> Deprotonation</li>
+                <li><span style="color: #808080;">■</span> Reaction</li>
+            </ul>
+        </div>
+    </div>
+</div>
