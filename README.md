@@ -1,4 +1,4 @@
-# rxnnet - Reaction Network Explorer
+# rxnnet
 
 A Python tool for automated exploration and visualization of chemical reaction networks using quantum mechanical calculations.
 
@@ -95,6 +95,7 @@ python -m rxnnet.calc <network_directory>/nodes/<node_id>-*.json
 
 Repeat steps 4-6 to grow the reaction network.
 
+
 ### 8. Visualize
 
 Generate an interactive HTML visualization:
@@ -102,6 +103,11 @@ Generate an interactive HTML visualization:
 ```bash
 python -m rxnnet.visualize
 ```
+
+For follow-up analysis, see:
+
+- [Analyzing and visualizing the reaction network](https://gist.github.com/juius/9e161982d1ae5e6cb1431e0d1bf96cf6)
+- [Kinetic modelling](https://gist.github.com/juius/ac814718136c4aca7fad7f4510d40b17)
 
 ## Network Directory Structure
 
@@ -148,6 +154,9 @@ python -m rxnnet.collect
 
 # Calculate energies for all nodes
 python -m rxnnet.calc nodes/*.json
+
+# Filter and prune network based on variables
+python -m rxnnet.status --pH 7 --temp 313.15 --max-path-energy 30 --min-count 3
 
 # Visualize
 python -m rxnnet.visualize

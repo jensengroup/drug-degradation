@@ -12,7 +12,7 @@ const UI = {
 
     bindControls() {
         // Filter sliders
-        ['countThreshold', 'energyThreshold', 'barrierThreshold'].forEach(id => {
+        ['countThreshold', 'pathEnergyThreshold'].forEach(id => {
             const slider = document.getElementById(id);
             const valueSpan = document.getElementById(id + 'Value');
             if (slider && valueSpan) {
@@ -63,11 +63,12 @@ const UI = {
     },
 
     applyFilters() {
-        const maxBarrier = parseFloat(document.getElementById('barrierThreshold')?.value) || Infinity;
-        const maxEnergy = parseFloat(document.getElementById('energyThreshold')?.value) || Infinity;
-        const minCount = parseInt(document.getElementById('countThreshold')?.value) || 1;
+        const pathEnergyRaw = parseFloat(document.getElementById('pathEnergyThreshold')?.value);
+        const maxPathEnergy = isNaN(pathEnergyRaw) ? Infinity : pathEnergyRaw;
+        const countRaw = parseInt(document.getElementById('countThreshold')?.value);
+        const minCount = isNaN(countRaw) ? 1 : countRaw;
 
-        const { nodes, edges, junctions } = Data.filter({ maxBarrier, maxEnergy, minCount });
+        const { nodes, edges, junctions } = Data.filter({ maxPathEnergy, minCount });
         NetworkGraph.update(nodes, edges, junctions);
         this.updateStats();
     },

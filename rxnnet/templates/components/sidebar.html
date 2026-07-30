@@ -13,22 +13,13 @@
             <input type="range" id="countThreshold" min="1" max="10" value="1">
         </div>
 
-        <!-- Max Reaction Energy Threshold -->
+        <!-- Max Path Energy Threshold -->
         <div class="slider-control">
             <label>
-                Max Reaction Energy: <span id="energyThresholdValue" class="slider-value">30</span> kcal/mol
+                Max Path Energy: <span id="pathEnergyThresholdValue" class="slider-value">50</span> kcal/mol
             </label>
-            <input type="range" id="energyThreshold" min="0" max="100" value="30" step="1">
-            <div class="slider-hint">Filters by maximum reaction energy along pathway</div>
-        </div>
-
-        <!-- Max Barrier Threshold -->
-        <div class="slider-control">
-            <label>
-                Max Barrier: <span id="barrierThresholdValue" class="slider-value">50</span> kcal/mol
-            </label>
-            <input type="range" id="barrierThreshold" min="0" max="100" value="50" step="1">
-            <div class="slider-hint">Filters by maximum barrier from substrate</div>
+            <input type="range" id="pathEnergyThreshold" min="0" max="100" value="50" step="1">
+            <div class="slider-hint">Prunes nodes whose best pathway from substrate exceeds this barrier</div>
         </div>
 
         <!-- Disable Filters -->

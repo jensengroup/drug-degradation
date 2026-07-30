@@ -4,8 +4,7 @@
 const CONFIG = {
     // Default filter values
     DEFAULT_COUNT_THRESHOLD: 1,
-    DEFAULT_ENERGY_THRESHOLD: 30,
-    DEFAULT_BARRIER_THRESHOLD: 50,
+    DEFAULT_PATH_ENERGY_THRESHOLD: 50,
 
     // Selection colors
     SELECTION_COLOR: '#DC143C',

@@ -35,6 +35,33 @@ const Data = {
             };
         });
 
+        // Eliminated (byproduct) nodes are produced in the same reaction step
+        // as their hyperedge's primary product, so they never get their own
+        // entry in bestPathBarrierMap/bestPathEnergyMap (the backend only
+        // traces pathways through primary products). Propagate the primary
+        // product's values so byproducts get pruned alongside it instead of
+        // always passing the filter.
+        const nodesById = new Map(this.nodes.map(n => [n.id, n]));
+        originalEdgeData.forEach(e => {
+            const eliminatedProducts = e.smaller_products || [];
+            if (eliminatedProducts.length === 0) return;
+            const primaryNode = nodesById.get(e.end);
+            if (!primaryNode) return;
+
+            eliminatedProducts.forEach(elimId => {
+                const elimNode = nodesById.get(elimId);
+                if (!elimNode) return;
+                if (elimNode.barrier === null ||
+                    (primaryNode.barrier !== null && primaryNode.barrier < elimNode.barrier)) {
+                    elimNode.barrier = primaryNode.barrier;
+                }
+                if (elimNode.pathEnergy === null ||
+                    (primaryNode.pathEnergy !== null && primaryNode.pathEnergy < elimNode.pathEnergy)) {
+                    elimNode.pathEnergy = primaryNode.pathEnergy;
+                }
+            });
+        });
+
         // Parse edges and create hyperedge junctions
         let edgeId = 0;
         let junctionId = -1;
@@ -116,13 +143,12 @@ const Data = {
         return this.raw.bestPathMap[nodeId] || null;
     },
 
-    filter({ maxBarrier = Infinity, maxEnergy = Infinity, minCount = 1 } = {}) {
-        // Filter nodes by barrier and energy
+    filter({ maxPathEnergy = Infinity, minCount = 1 } = {}) {
+        // Filter nodes by best-pathway barrier (max path energy)
         const visibleNodeIds = new Set();
         this.nodes.forEach(n => {
-            const passBarrier = n.isSubstrate || n.barrier === null || n.barrier <= maxBarrier;
-            const passEnergy = n.isSubstrate || n.pathEnergy === null || n.pathEnergy <= maxEnergy;
-            if (passBarrier && passEnergy) {
+            const passPathEnergy = n.isSubstrate || n.barrier === null || n.barrier <= maxPathEnergy;
+            if (passPathEnergy) {
                 visibleNodeIds.add(n.id);
             }
         });
@@ -130,12 +156,36 @@ const Data = {
         // Filter edges by count and connected nodes
         this.filteredEdges = this.edges.filter(e => {
             const countPass = (e.count || 1) >= minCount;
-            // For junction edges, check if junction is valid
-            if (e.isToJunction || e.isFromJunction) {
-                return countPass; // Junction edges handled separately
+            // Junction (hyperedge) legs only have one real node endpoint;
+            // the junction id itself is virtual and not in visibleNodeIds.
+            if (e.isToJunction) {
+                return countPass && visibleNodeIds.has(e.from);
+            }
+            if (e.isFromJunction) {
+                return countPass && visibleNodeIds.has(e.to);
             }
             const nodesExist = visibleNodeIds.has(e.from) && visibleNodeIds.has(e.to);
             return countPass && nodesExist;
+        });
+
+        // A junction (the little grey hyperedge-split point) is only meaningful
+        // if it still has both a reactant coming in and at least one product
+        // going out. If every product on one side got pruned, drop the junction
+        // itself along with its now-dangling stub edge(s).
+        const junctionIncoming = new Set();
+        const junctionOutgoing = new Set();
+        this.filteredEdges.forEach(e => {
+            if (e.isToJunction) junctionIncoming.add(e.to);
+            if (e.isFromJunction) junctionOutgoing.add(e.from);
+        });
+        const validJunctions = new Set(
+            [...junctionIncoming].filter(id => junctionOutgoing.has(id))
+        );
+
+        this.filteredEdges = this.filteredEdges.filter(e => {
+            if (e.isToJunction) return validJunctions.has(e.to);
+            if (e.isFromJunction) return validJunctions.has(e.from);
+            return true;
         });
 
         // Get connected nodes from filtered edges
@@ -153,9 +203,7 @@ const Data = {
         this.filteredNodes = this.nodes.filter(n => connectedIds.has(n.id));
 
         // Get visible junctions
-        const visibleJunctions = this.junctionNodes.filter(j =>
-            this.filteredEdges.some(e => e.from === j.id || e.to === j.id)
-        );
+        const visibleJunctions = this.junctionNodes.filter(j => validJunctions.has(j.id));
 
         return {
             nodes: this.filteredNodes,

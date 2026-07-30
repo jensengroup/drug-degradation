@@ -7,10 +7,13 @@
 
     // Initialize network graph
     NetworkGraph.init('network-container');
-    NetworkGraph.update(Data.nodes, Data.edges, Data.junctionNodes);
 
     // Initialize UI
     UI.init();
+
+    // Apply the sliders' default values to the initial view instead of
+    // showing the raw, unfiltered network.
+    UI.applyFilters();
 
     console.log('Reaction Network Visualization initialized');
     console.log(`Loaded ${Data.nodes.length} nodes, ${Data.edges.length} edges`);
